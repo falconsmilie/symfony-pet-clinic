@@ -5,7 +5,10 @@ namespace App\Entity\Pet;
 use ApiPlatform\Core\Annotation\ApiResource;
 use App\Entity\NamedEntityBase;
 use App\Entity\Owner\Owner;
+use App\Entity\Visit\Visit;
 use App\Repository\Pet\PetRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -25,6 +28,16 @@ class Pet extends NamedEntityBase
      * @ORM\JoinColumn(nullable=false)
      */
     private $type;
+
+    /**
+     * @ORM\OneToMany(targetEntity=Visit::class, mappedBy="pet", orphanRemoval=true)
+     */
+    private $visits;
+
+    public function __construct()
+    {
+        $this->visits = new ArrayCollection();
+    }
 
     public function getOwner(): ?Owner
     {
@@ -46,6 +59,36 @@ class Pet extends NamedEntityBase
     public function setType(?PetType $type): self
     {
         $this->type = $type;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Visit[]
+     */
+    public function getVisits(): Collection
+    {
+        return $this->visits;
+    }
+
+    public function addVisit(Visit $visit): self
+    {
+        if (!$this->visits->contains($visit)) {
+            $this->visits[] = $visit;
+            $visit->setPet($this);
+        }
+
+        return $this;
+    }
+
+    public function removeVisit(Visit $visit): self
+    {
+        if ($this->visits->removeElement($visit)) {
+            // set the owning side to null (unless already changed)
+            if ($visit->getPet() === $this) {
+                $visit->setPet(null);
+            }
+        }
 
         return $this;
     }
